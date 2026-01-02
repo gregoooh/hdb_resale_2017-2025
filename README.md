@@ -204,7 +204,7 @@ hdb_data %>%
   ggcorrplot(lab = FALSE, hc.order = TRUE, method = "square") +
   theme_minimal() + xlab("") + ylab("")
 ```
-![](ResalePrices_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+![](figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 Excluding the lease commence date and Cost/Area (\$/A) we notice that
 the greatest factor in influencing resale price is the floor area.
@@ -265,7 +265,7 @@ qqnorm(residuals(mlr),ylab = 'Residuals')
 qqline(residuals(mlr))
 ```
 
-![](ResalePrices_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+![](figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 Clearly, the normality assumption was violated.
 
 We now check residual plots to check if more assumptions were violated.
@@ -285,7 +285,7 @@ plot(hdb_data$year_sold, residuals(mlr), ylab='Residuals',xlab='Year Sold')
 lines(lowess(hdb_data$year_sold, residuals(mlr)), col = "red")
 ```
 
-![](https://github.com/gregoooh/hdb_resale_2017-2025/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 ``` r
 par(mfrow=c(2,2))
@@ -302,7 +302,7 @@ plot(hdb_data$level_cat, residuals(mlr), ylab='Residuals',xlab='Floor Level')
 lines(lowess(hdb_data$level_cat, residuals(mlr)), col = "red") 
 ```
 
-![](ResalePrices_files/figure-gfm/unnamed-chunk-16-1.png)<!-- --> From
+![](figure-gfm/unnamed-chunk-16-1.png)<!-- --> From
 the residual plots, we can see that the variance of the residuals
 against Fitted Values and Floor Area do not have a constant variance.
 This can be seen from the conical shape of the plot.
@@ -352,7 +352,7 @@ qqnorm(residuals(mlr2),ylab = 'Residuals')
 qqline(residuals(mlr2))
 ```
 
-![](ResalePrices_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+![](figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
 ``` r
 par(mfrow=c(2,2))
@@ -369,7 +369,7 @@ plot(hdb_data$year_sold, residuals(mlr2), ylab='Residuals',xlab='Year Sold')
 lines(lowess(hdb_data$year_sold, residuals(mlr2)), col = "red")
 ```
 
-![](ResalePrices_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+![](figure-gfm/unnamed-chunk-19-1.png)<!-- -->
 
 ``` r
 par(mfrow=c(2,2))
@@ -386,7 +386,7 @@ plot(hdb_data$level_cat, residuals(mlr2), ylab='Residuals',xlab='Floor Level')
 lines(lowess(hdb_data$level_cat, residuals(mlr2)), col = "red") 
 ```
 
-![](ResalePrices_files/figure-gfm/unnamed-chunk-20-1.png)<!-- --> From
+![](figure-gfm/unnamed-chunk-20-1.png)<!-- --> From
 the Q-Q Plot, the heavy right tail of the plot has been greatly reduced.
 Additionally, the residual plots mostly show a horizontal band. Overall,
 the assumptions of the model are mostly followed and we will be using
@@ -495,6 +495,7 @@ about 14%.
 
 Additionally, a properties value also increases by about 6.5% every
 year, which seems about right due to factors like inflation etc.
+
 
 
 
