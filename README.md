@@ -195,7 +195,7 @@ hdb_data %>%
   ggpairs(progress = F) + theme_minimal()
 ```
 
-![](ResalePrices_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](hdb_resale_2017-2025/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
 ``` r
 hdb_data %>%
@@ -496,4 +496,5 @@ about 14%.
 
 Additionally, a properties value also increases by about 6.5% every
 year, which seems about right due to factors like inflation etc.
+
 
