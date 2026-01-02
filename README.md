@@ -29,74 +29,7 @@ HDB to the amenity.
 
 #### Calculating Distance to Closest Amenities
 
-``` r
-library(readxl)
-library(dplyr)
-```
-
-    ## 
-    ## Attaching package: 'dplyr'
-
-    ## The following objects are masked from 'package:stats':
-    ## 
-    ##     filter, lag
-
-    ## The following objects are masked from 'package:base':
-    ## 
-    ##     intersect, setdiff, setequal, union
-
-``` r
-library(stringr)
-library(sf)
-```
-
-    ## Linking to GEOS 3.13.1, GDAL 3.11.4, PROJ 9.7.0; sf_use_s2() is TRUE
-
-``` r
-library(ggcorrplot)
-```
-
-    ## Loading required package: ggplot2
-
-``` r
-library(tidyverse)
-```
-
-    ## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-    ## ✔ forcats   1.0.1     ✔ readr     2.1.6
-    ## ✔ lubridate 1.9.4     ✔ tibble    3.3.0
-    ## ✔ purrr     1.2.0     ✔ tidyr     1.3.2
-
-    ## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-    ## ✖ dplyr::filter() masks stats::filter()
-    ## ✖ dplyr::lag()    masks stats::lag()
-    ## ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
-
-``` r
-library(broom)
-library(GGally)
-library(rmarkdown)
-```
-
-``` r
-hdb_data = read_excel('Resale flat prices based on registration date from Jan-2017 onwards.xlsx')
-
-head(hdb_data)
-```
-
-    ## # A tibble: 6 × 18
-    ##   moNORTH year_sold moNORTH_sold town   flat_type block street_name storey_range
-    ##   <chr>   <chr>     <chr>        <chr>  <chr>     <chr> <chr>       <chr>       
-    ## 1 2017-01 2017      01           ANG M… 2 ROOM    406   ANG MO KIO… 10 TO 12    
-    ## 2 2017-01 2017      01           ANG M… 3 ROOM    108   ANG MO KIO… 01 TO 03    
-    ## 3 2017-01 2017      01           ANG M… 3 ROOM    602   ANG MO KIO… 01 TO 03    
-    ## 4 2017-01 2017      01           ANG M… 3 ROOM    465   ANG MO KIO… 04 TO 06    
-    ## 5 2017-01 2017      01           ANG M… 3 ROOM    601   ANG MO KIO… 01 TO 03    
-    ## 6 2017-01 2017      01           ANG M… 3 ROOM    150   ANG MO KIO… 01 TO 03    
-    ## # ℹ 10 more variables: floor_area_sqm <dbl>, flat_model <chr>,
-    ## #   lease_commence_date <dbl>, remaining_lease <chr>, remaining_years <chr>,
-    ## #   resale_price <dbl>, full_address <chr>, Latitude <chr>, Longitude <chr>,
-    ## #   `$/A` <dbl>
+Extract Coordinates from dataset.
 
 ``` r
 hdb_coordinates = hdb_data %>% select(full_address,Longitude,Latitude)
@@ -117,10 +50,6 @@ head(hdb_coordinates)
 ``` r
 mrt_coordinates = read_excel('MRT Stations.xlsx') %>% select(STN_NAME,Longitude,Latitude) %>% filter(str_detect(STN_NAME,"MRT"))
 ```
-
-    ## New names:
-    ## • `` -> `...1`
-
 ``` r
 head(mrt_coordinates)
 ```
@@ -135,7 +64,8 @@ head(mrt_coordinates)
     ## 5 REDHILL MRT STATION             104.     1.29
     ## 6 YEW TEE MRT STATION             104.     1.40
 
-\####Distance to MRT We will use the SF package for calculating the
+#### Distance to MRT
+We will use the SF package for calculating the
 minimum distance between a HDB and its respectivce coordinates. - CRS
 4326 is standard GPS lat/lon.
 
@@ -274,16 +204,6 @@ hdb_data %>%
   ggcorrplot(lab = FALSE, hc.order = TRUE, method = "square") +
   theme_minimal() + xlab("") + ylab("")
 ```
-
-    ## Warning: `aes_string()` was deprecated in ggplot2 3.0.0.
-    ## ℹ Please use tidy evaluation idioms with `aes()`.
-    ## ℹ See also `vignette("ggplot2-in-packages")` for more information.
-    ## ℹ The deprecated feature was likely used in the ggcorrplot package.
-    ##   Please report the issue at <https://github.com/kassambara/ggcorrplot/issues>.
-    ## This warning is displayed once every 8 hours.
-    ## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
-    ## generated.
-
 ![](ResalePrices_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 Excluding the lease commence date and Cost/Area (\$/A) we notice that
@@ -576,3 +496,4 @@ about 14%.
 
 Additionally, a properties value also increases by about 6.5% every
 year, which seems about right due to factors like inflation etc.
+
