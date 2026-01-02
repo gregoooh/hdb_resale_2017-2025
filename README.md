@@ -285,7 +285,7 @@ plot(hdb_data$year_sold, residuals(mlr), ylab='Residuals',xlab='Year Sold')
 lines(lowess(hdb_data$year_sold, residuals(mlr)), col = "red")
 ```
 
-![](ResalePrices_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](https://github.com/gregoooh/hdb_resale_2017-2025/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 ``` r
 par(mfrow=c(2,2))
@@ -496,5 +496,6 @@ about 14%.
 
 Additionally, a properties value also increases by about 6.5% every
 year, which seems about right due to factors like inflation etc.
+
 
 
