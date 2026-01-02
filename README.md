@@ -395,16 +395,15 @@ this model for interpretation.
 #### Interpretation and Conclusion
 
 From the model, we get the following equation.
-
 $$
 \begin{aligned}
 \ln(\widehat{\text{Resale Price}}) = &-115.4 \\
-&+ 0.00683(\text{Remaining_Years}) \\
-&+ 0.00897(\text{Floor_Area_sqm}) \\
-&- 0.000143(\text{Nearest_MRT}) \\
-&+ 0.000055(\text{Nearest_Shopping}) \\
-&+ 0.0629(\text{Year_Sold}) \\
-&+ 0.0434(\text{Level_Cat})
+&+ 0.00683(\text{Remaining\_Years}) \\
+&+ 0.00897(\text{Floor\_Area\_sqm}) \\
+&- 0.000143(\text{Nearest\_MRT}) \\
+&+ 0.000055(\text{Nearest\_Shopping}) \\
+&+ 0.0629(\text{Year\_Sold}) \\
+&+ 0.0434(\text{Level\_Cat})
 \end{aligned}
 $$
 
@@ -496,6 +495,7 @@ about 14%.
 
 Additionally, a properties value also increases by about 6.5% every
 year, which seems about right due to factors like inflation etc.
+
 
 
 
