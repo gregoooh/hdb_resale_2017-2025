@@ -302,8 +302,8 @@ plot(hdb_data$level_cat, residuals(mlr), ylab='Residuals',xlab='Floor Level')
 lines(lowess(hdb_data$level_cat, residuals(mlr)), col = "red") 
 ```
 
-![](figure-gfm/unnamed-chunk-16-1.png)<!-- --> From
-the residual plots, we can see that the variance of the residuals
+![](figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+From the residual plots, we can see that the variance of the residuals
 against Fitted Values and Floor Area do not have a constant variance.
 This can be seen from the conical shape of the plot.
 
@@ -312,7 +312,7 @@ tail. Additionally, the distibution of resale prices shows a
 right-skewed distribution. Thus, we will apply a log-transformation to
 the model.
 
-\#New Model
+#### New Model
 
 ``` r
 mlr2 <- lm(formula = log(resale_price) ~ remaining_years + floor_area_sqm + nearest_mrt + nearest_shopping + year_sold + level_cat,
@@ -386,8 +386,8 @@ plot(hdb_data$level_cat, residuals(mlr2), ylab='Residuals',xlab='Floor Level')
 lines(lowess(hdb_data$level_cat, residuals(mlr2)), col = "red") 
 ```
 
-![](figure-gfm/unnamed-chunk-20-1.png)<!-- --> From
-the Q-Q Plot, the heavy right tail of the plot has been greatly reduced.
+![](figure-gfm/unnamed-chunk-20-1.png)<!-- --> 
+From the Q-Q Plot, the heavy right tail of the plot has been greatly reduced.
 Additionally, the residual plots mostly show a horizontal band. Overall,
 the assumptions of the model are mostly followed and we will be using
 this model for interpretation.
@@ -395,7 +395,8 @@ this model for interpretation.
 #### Interpretation and Conclusion
 
 From the model, we get the following equation.
-$$
+
+```math 
 \begin{aligned}
 \ln(\widehat{\text{Resale Price}}) = &-115.4 \\
 &+ 0.00683(\text{Remaining\_Years}) \\
@@ -405,7 +406,7 @@ $$
 &+ 0.0629(\text{Year\_Sold}) \\
 &+ 0.0434(\text{Level\_Cat})
 \end{aligned}
-$$
+```
 
 Overall, we can identify the effects of each variable
 
@@ -495,6 +496,7 @@ about 14%.
 
 Additionally, a properties value also increases by about 6.5% every
 year, which seems about right due to factors like inflation etc.
+
 
 
 
