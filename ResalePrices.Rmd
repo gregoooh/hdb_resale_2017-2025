@@ -1,0 +1,296 @@
+---
+title: "HDB Resale Prices Regression Analysis (2017-2025)"
+output: github_document
+date: "2025-12-25"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Calculating Distance to Closest Amenities
+
+```{r, warning=FALSE}
+library(readxl)
+library(dplyr)
+library(stringr)
+library(sf)
+library(ggcorrplot)
+library(tidyverse)
+library(broom)
+library(GGally)
+library(rmarkdown)
+```
+
+```{r}
+hdb_data = read_excel('Resale flat prices based on registration date from Jan-2017 onwards.xlsx')
+
+head(hdb_data)
+```
+
+```{r}
+hdb_coordinates = hdb_data %>% select(full_address,Longitude,Latitude)
+
+head(hdb_coordinates)
+```
+#Extracting MRT Coordinates
+
+```{r}
+mrt_coordinates = read_excel('MRT Stations.xlsx') %>% select(STN_NAME,Longitude,Latitude) %>% filter(str_detect(STN_NAME,"MRT"))
+
+head(mrt_coordinates)
+```
+
+#Distance to MRT
+We will use the SF package for calculating the minimum distance between a HDB and its respectivce coordinates.
+ - CRS 4326 is standard GPS lat/lon.
+
+```{r}
+houses_sf <- st_as_sf(hdb_coordinates, coords = c("Longitude", "Latitude"), crs = 4326)
+stations_sf <- st_as_sf(mrt_coordinates, coords = c("Longitude", "Latitude"), crs = 4326)
+```
+
+We will find the nearest MRT Station (Index) then calculates the distance to that specific nearest station
+```{r}
+nearest_indices <- st_nearest_feature(houses_sf, stations_sf)
+nearest_mrt <- st_distance(houses_sf, stations_sf[nearest_indices,], by_element = TRUE)
+
+head(nearest_mrt)
+```
+
+#Extracting Shopping Center Data
+```{r}
+shopping_coordinates = read_excel('shopping_mall_coordinates.xlsx') %>% select(`Mall Name`,LONGITUDE,LATITUDE) %>%
+  rename( Mall = `Mall Name`,
+         Longitude = LONGITUDE,
+         Latitude = LATITUDE)
+
+head(shopping_coordinates)
+```
+
+#Distance to Shopping Center
+We will use the SF package for calculating the minimum distance between a HDB and its respectivce coordinates.
+ - CRS 4326 is standard GPS lat/lon.
+
+```{r}
+shopping_sf <- st_as_sf(shopping_coordinates, coords = c("Longitude", "Latitude"), crs = 4326)
+```
+
+We will find the nearest Shopping Center (Index) then calculates the distance to that specific nearest center
+```{r}
+nearest_indices <- st_nearest_feature(houses_sf, shopping_sf)
+nearest_shopping <- st_distance(houses_sf, shopping_sf[nearest_indices,], by_element = TRUE)
+
+head(nearest_shopping)
+```
+We now add these new vectors to the original dataframe
+```{r}
+hdb_data = cbind(hdb_data,nearest_mrt,nearest_shopping)
+hdb_data = hdb_data[,1:20]
+
+#Convert  Factors into numeric
+hdb_data = hdb_data %>% mutate(remaining_years = as.numeric(remaining_years),
+                               nearest_mrt = as.numeric(nearest_mrt),
+                               nearest_shopping = as.numeric(nearest_shopping),
+                               year_sold = as.numeric(year_sold))
+
+level_function = function(x){
+  level = x %>% substr(1,2) %>% as.numeric() 
+  level = level %/% 3 +1
+}
+
+hdb_data$level_cat = sapply(hdb_data$storey_range,level_function)
+
+head(hdb_data)
+```
+
+# Exploratory data analysis
+
+```{r}
+hdb_data %>% 
+  select(where(is.numeric)) %>%
+  ggpairs(progress = F) + theme_minimal()
+```
+```{r}
+hdb_data %>%
+  select(where(is.numeric)) %>%
+  cor(use = "pairwise.complete.obs") %>%
+  ggcorrplot(lab = FALSE, hc.order = TRUE, method = "square") +
+  theme_minimal() + xlab("") + ylab("")
+```
+
+Excluding the lease commence date and Cost/Area ($/A) we notice that the greatest factor in influencing resale price is the floor area.
+
+Surprisingly, the distance to ameneties like MRT stations and Shopping Centeres have a lower correlation coefficient compared to the other numeric variables. 
+
+# Regression Analysis
+
+We will now create a regresison model to quantify and predict the resale price of a HDB
+
+First, we will include numeric variables 'remaining_years', 'floor_area_sqm', 'nearest_mrt', 'nearest_shopping' and 
+'year_sold' to predict 'resale price'.
+```{r}
+mlr <- lm(formula = resale_price ~ remaining_years + floor_area_sqm + nearest_mrt + nearest_shopping + year_sold + level_cat,
+          data = hdb_data)
+summary(mlr)
+```
+From the F-Test we notice that the Regression Model is significant.
+Additionally, from the individual T-tests, we reject the hypothesis that the coefficients are equal to 0.
+
+Now, we will check the Q-Q Plot to check for any violations of assumptions.
+```{r}
+qqnorm(residuals(mlr),ylab = 'Residuals')
+qqline(residuals(mlr))
+```
+Clearly, the normality assumption was violated.
+
+We now check residual plots to check if more assumptions were violated.
+```{r}
+par(mfrow=c(2,2))
+plot(residuals(mlr), ylab='Residuals')
+lines(lowess(residuals(mlr)), col = "red")
+
+plot(fitted(mlr), residuals(mlr), ylab='Residuals', xlab='Fitted values')
+lines(lowess(fitted(mlr), residuals(mlr)), col = "red")
+
+plot(hdb_data$remaining_years, residuals(mlr), ylab='Residuals',xlab='Remaining Years')
+lines(lowess(hdb_data$remaining_years, residuals(mlr)), col = "red")
+
+plot(hdb_data$year_sold, residuals(mlr), ylab='Residuals',xlab='Year Sold')
+lines(lowess(hdb_data$year_sold, residuals(mlr)), col = "red")
+```
+```{r}
+par(mfrow=c(2,2))
+plot(hdb_data$floor_area_sqm, residuals(mlr), ylab='Residuals',xlab='Floor Area')
+lines(lowess(hdb_data$floor_area_sqm, residuals(mlr)), col = "red")
+
+plot(hdb_data$nearest_mrt, residuals(mlr), ylab='Residuals',xlab='Distance to MRT')
+lines(lowess(hdb_data$nearest_mrt, residuals(mlr)), col = "red") 
+
+plot(hdb_data$nearest_shopping, residuals(mlr), ylab='Residuals',xlab='Distance to Shopping Center')
+lines(lowess(hdb_data$nearest_shopping, residuals(mlr)), col = "red") 
+
+plot(hdb_data$level_cat, residuals(mlr), ylab='Residuals',xlab='Floor Level')
+lines(lowess(hdb_data$level_cat, residuals(mlr)), col = "red") 
+```
+From the residual plots, we can see that the variance of the residuals against Fitted Values and Floor Area do not have a constant variance. This can be seen from the conical shape of the plot. 
+
+From the Q-Q Plot, the distribution of the quantiles have a heavy right tail. Additionally, the distibution of resale prices shows a right-skewed distribution. Thus, we will apply a log-transformation to the model.
+
+#New Model
+```{r}
+mlr2 <- lm(formula = log(resale_price) ~ remaining_years + floor_area_sqm + nearest_mrt + nearest_shopping + year_sold + level_cat,
+          data = hdb_data)
+summary(mlr2)
+```
+The F-test and the T-tests show that the model is significant.
+```{r}
+qqnorm(residuals(mlr2),ylab = 'Residuals')
+qqline(residuals(mlr2))
+```
+
+```{r}
+par(mfrow=c(2,2))
+plot(residuals(mlr2), ylab='Residuals')
+lines(lowess(residuals(mlr2)), col = "red")
+
+plot(fitted(mlr2), residuals(mlr2), ylab='Residuals', xlab='Fitted values')
+lines(lowess(fitted(mlr2), residuals(mlr2)), col = "red")
+
+plot(hdb_data$remaining_years, residuals(mlr2), ylab='Residuals',xlab='Remaining Years')
+lines(lowess(hdb_data$remaining_years, residuals(mlr2)), col = "red")
+
+plot(hdb_data$year_sold, residuals(mlr2), ylab='Residuals',xlab='Year Sold')
+lines(lowess(hdb_data$year_sold, residuals(mlr2)), col = "red")
+```
+
+```{r}
+par(mfrow=c(2,2))
+plot(hdb_data$floor_area_sqm, residuals(mlr2), ylab='Residuals',xlab='Floor Area')
+lines(lowess(hdb_data$floor_area_sqm, residuals(mlr2)), col = "red")
+
+plot(hdb_data$nearest_mrt, residuals(mlr2), ylab='Residuals',xlab='Distance to MRT')
+lines(lowess(hdb_data$nearest_mrt, residuals(mlr2)), col = "red") 
+
+plot(hdb_data$nearest_shopping, residuals(mlr2), ylab='Residuals',xlab='Distance to Shopping Center')
+lines(lowess(hdb_data$nearest_shopping, residuals(mlr2)), col = "red")
+
+plot(hdb_data$level_cat, residuals(mlr2), ylab='Residuals',xlab='Floor Level')
+lines(lowess(hdb_data$level_cat, residuals(mlr2)), col = "red") 
+```
+From the Q-Q Plot, the heavy right tail of the plot has been greatly reduced.
+Additionally, the residual plots mostly show a horizontal band.
+Overall, the assumptions of the model are mostly followed and we will be using this model for interpretation.
+
+#Interpretation
+
+From the model, we get the following equation.
+
+$$
+\begin{aligned}
+\ln(\widehat{\text{Resale Price}}) = &-115.4 \\
+&+ 0.00683(\text{Remaining_Years}) \\
+&+ 0.00897(\text{Floor_Area_sqm}) \\
+&- 0.000143(\text{Nearest_MRT}) \\
+&+ 0.000055(\text{Nearest_Shopping}) \\
+&+ 0.0629(\text{Year_Sold}) \\
+&+ 0.0434(\text{Level_Cat})
+\end{aligned}
+$$
+
+Overall, we can identify the effects of each variable
+```{r}
+percentage_change = round(((exp(mlr2$coefficients) - 1) *100),3)[2:7]
+as.data.frame(percentage_change)
+```
+
+For a sanity check lets create a hypothetical "HDB Flat" on the "remaining_years" variable
+```{r}
+new_house <- data.frame(
+  remaining_years = 90,
+  floor_area_sqm = 100,
+  nearest_mrt = 500,
+  nearest_shopping = 500,
+  year_sold = 2025,
+  level_cat = 10
+)
+
+new_house2 <- data.frame(
+  remaining_years = 91,
+  floor_area_sqm = 100,
+  nearest_mrt = 500,
+  nearest_shopping = 500,
+  year_sold = 2025,
+  level_cat = 10
+)
+
+predicted_price <- exp(predict(mlr2, newdata = new_house))
+
+predicted_price2 <- exp(predict(mlr2, newdata = new_house2))
+
+#Percent change
+((predicted_price2 - predicted_price)/predicted_price) * 100
+```
+The coefficients for "nearest_mrt" and "nearest_shopping" seem relatively small. However, it is because it is in Metres instead of kilometres. 
+
+Additionally, the "level_cat" variable was based on "storey_range" where HDB units were categorised into ranges of 3 fot their levels. Hence, the coefficient may seem large. 
+
+The appropriate coefficients are as follows.
+```{r}
+percentage_change = as.data.frame(percentage_change)
+
+#From Metres to Kilometres (Nearest MRT)
+percentage_change[3,] = percentage_change[3,] * 1000
+
+#From Metres to Kilometres (Nearest Shopping)
+percentage_change[4,] = percentage_change[4,] * 1000
+
+#From every 3 floors to just 1 floor each
+percentage_change[6,] = percentage_change[6,] /3
+
+percentage_change
+```
+
+Overall, we can conclude that a properties price is mostly affected by how close it is to certain ammenities especially MRTs. Where, for every kilometre closer to the MRT, the value of the property increases by about 14%.
+
+Additionally, a properties value also increases by about 6.5% every year, which seems about right due to factors like inflation etc.
